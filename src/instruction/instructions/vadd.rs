@@ -1,20 +1,16 @@
 use std::fmt::{Display, Formatter};
+use rand::{Rng, thread_rng};
 use crate::common::condition::Condition;
 use crate::env::env::Env;
-use crate::instruction::instruction::Instruction;
+use crate::instruction::instruction::{Instruction, InstructionDispatch, InstructionName};
 
 #[derive(Clone)]
-pub struct VAdd {
-    pub cond: Condition,
-    pub dest: usize,
-    pub src1: usize,
-    pub src2: usize,
-    pub f32: bool,
-}
+pub struct VAddDispatch {}
 
-impl VAdd {
-    pub fn new_32(dest: usize, src1: usize, src2: usize) -> Self {
-        Self {
+impl VAddDispatch {
+    pub fn new_32(dest: usize, src1: usize, src2: usize) -> Instruction {
+        Instruction {
+            name: InstructionName::VADD,
             cond: Condition::AL,
             dest,
             src1,
@@ -23,8 +19,9 @@ impl VAdd {
         }
     }
 
-    pub fn new_64(dest: usize, src1: usize, src2: usize) -> Self {
-        Self {
+    pub fn new_64(dest: usize, src1: usize, src2: usize) -> Instruction {
+        Instruction {
+            name: InstructionName::VADD,
             cond: Condition::AL,
             dest,
             src1,
@@ -34,29 +31,37 @@ impl VAdd {
     }
 }
 
-impl Instruction for VAdd {
-    fn execute(&self, env: &mut Env) {
-        if self.f32 {
-            let src1 = env.get_single(self.src1);
-            let src2 = env.get_single(self.src2);
-            env.set_single(self.dest, src1 + src2);
+impl InstructionDispatch for VAddDispatch {
+    fn execute(instruction: &Instruction, env: &mut Env) {
+        if instruction.f32 {
+            let src1 = env.get_single(instruction.src1);
+            let src2 = env.get_single(instruction.src2);
+            env.set_single(instruction.dest, src1 + src2);
         } else {
-            let src1 = env.get_double(self.src1);
-            let src2 = env.get_double(self.src2);
-            env.set_double(self.dest, src1 + src2);
+            let src1 = env.get_double(instruction.src1);
+            let src2 = env.get_double(instruction.src2);
+            env.set_double(instruction.dest, src1 + src2);
         }
     }
-}
 
-impl Display for VAdd {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "VADD")?;
-        if self.f32 {
-            write!(f, ".F32 S{}, S{}, S{}", self.dest, self.src1, self.src2)?;
+    fn get_string(instruction: &Instruction) -> String {
+        let mut result = String::from("VADD");
+        if instruction.f32 {
+            result += &format!(".F32 S{}, S{}, S{}", instruction.dest, instruction.src1, instruction.src2);
         } else {
-            write!(f, ".F64 D{}, D{}, D{}", self.dest, self.src1, self.src2)?;
+            result += &format!(".F64 D{}, D{}, D{}", instruction.dest, instruction.src1, instruction.src2);
         }
+        result
+    }
 
-        Ok(())
+    fn random() -> Instruction {
+        Instruction {
+            name: InstructionName::VADD,
+            dest: thread_rng().gen::<usize>() % 16,
+            src1: thread_rng().gen::<usize>() % 16,
+            src2: thread_rng().gen::<usize>() % 16,
+            cond: Condition::AL,
+            f32: false
+        }
     }
 }

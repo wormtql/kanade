@@ -7,3 +7,9 @@ edition = "2021"
 
 [dependencies]
 smallvec = "1.10.0"
+rand = "0.8.5"
+strum_macros = "0.24"
+strum = { version = "0.24", features = ["derive"] }
+num = "0.4"
+num-traits = "0.2"
+num-derive = "0.3"
